@@ -1,0 +1,56 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   process_check.c                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: yewen <yewen@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2017/08/09 23:15:32 by yewen             #+#    #+#             */
+/*   Updated: 2017/08/19 00:50:12 by yewen            ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "corewar.h"
+
+static int	check(t_proc *p)
+{
+	int		die;
+
+	die = p->arena->cycles - p->last_live >= p->arena->ctd ? 1 : 0;
+	if (die && (p->arena->verbose_lvl & V_LVL_DEATH))
+		ft_printf("Process %d hasn't lived for %d cycles (CTD %d)\n",
+			p->id, p->arena->cycles - p->last_live, p->arena->ctd);
+	if (die)
+	{
+		p->arena->alive--;
+		proc_set(p, UNSET_PLAYER);
+	}
+	return (die);
+}
+
+void		check_process(t_arena *a)
+{
+	int		i;
+
+	i = a->proc_count - 1;
+	while (i >= 0)
+	{
+		if (!a->procs[i]->dead)
+			a->procs[i]->dead = check(a->procs[i]);
+		--i;
+	}
+	a->last_check = a->cycles;
+	if (++a->check_cycles >= MAX_CHECKS || a->nbr_lives >= NBR_LIVE)
+	{
+		a->ctd -= CYCLE_DELTA;
+		if (a->verbose_lvl & V_LVL_CYCLES)
+			ft_printf("Cycle to die is now %d\n", a->ctd);
+		a->check_cycles = 0;
+	}
+	a->nbr_lives = 0;
+}
+
+int			cmp_id(int *ref, t_champ *data)
+{
+	return (*ref == data->id);
+}
